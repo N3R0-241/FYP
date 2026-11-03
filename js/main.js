@@ -59,7 +59,7 @@ document.addEventListener("keydown", (event) => {
   selectProduct(ids[next]);
 });
 
-initVision().then(setStatus);
+setStatus();
 setInterval(setStatus, 500);
 
 async function startCamera() {
@@ -69,9 +69,14 @@ async function startCamera() {
     return;
   }
   stopCamera();
-  state.status = "Waiting for camera permission…";
+  state.status = "Loading the face model…";
   setStatus();
   try {
+    await initVision();
+    setStatus();
+    if (!state.modelReady) return;
+    state.status = "Waiting for camera permission…";
+    setStatus();
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -113,8 +118,10 @@ async function usePhoto(file) {
     syncMirror();
     state.filters?.reset();
     document.body.dataset.mode = "photo";
+    state.status = "Loading the face model…";
+    setStatus();
+    await initVision();
     if (!state.modelReady) {
-      state.status = "Photo loaded. Face tracking needs the model, which has not loaded.";
       setStatus();
       return;
     }

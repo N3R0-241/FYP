@@ -1,7 +1,7 @@
 export const state = {
   mode: "mannequin",
   mirror: false,
-  status: "Loading the face model…",
+  status: "Studio mannequin. Turn the head with the slider.",
   modelReady: false,
   modelError: "",
   runningMode: "",

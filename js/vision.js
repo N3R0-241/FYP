@@ -1,18 +1,38 @@
-import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21";
 import { state } from "./state.js";
 
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm";
 const MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
-export async function initVision() {
+let visionModule = null;
+let loadPromise = null;
+
+async function loadVisionModule() {
+  if (!visionModule) {
+    visionModule = import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21").catch((error) => {
+      visionModule = null;
+      throw error;
+    });
+  }
+  return visionModule;
+}
+
+export function initVision() {
+  if (state.modelReady) return Promise.resolve(true);
+  if (loadPromise) return loadPromise;
   state.status = "Loading the face model…";
+  loadPromise = startVision().finally(() => {
+    if (!state.modelReady) loadPromise = null;
+  });
+  return loadPromise;
+}
+
+async function startVision() {
   try {
+    const { FaceLandmarker, FilesetResolver } = await loadVisionModule();
     const fileset = await FilesetResolver.forVisionTasks(WASM);
-    try {
-      state.landmarker = await createLandmarker(fileset, "GPU");
-    } catch {
-      state.landmarker = await createLandmarker(fileset, "CPU");
-    }
+    // CPU starts straight away. The GPU delegate often spends a long time failing
+    // before the same model is created again on CPU.
+    state.landmarker = await createLandmarker(FaceLandmarker, fileset, "CPU");
     state.runningMode = "IMAGE";
     state.modelReady = true;
     state.modelError = "";
@@ -27,7 +47,7 @@ export async function initVision() {
   }
 }
 
-function createLandmarker(fileset, delegate) {
+function createLandmarker(FaceLandmarker, fileset, delegate) {
   return FaceLandmarker.createFromOptions(fileset, {
     baseOptions: {
       modelAssetPath: MODEL,

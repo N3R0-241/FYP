@@ -16,7 +16,7 @@ Then open `http://localhost:5173`.
 
 `npm test` runs the geometry, tracking, catalog, and One Euro checks with Node. It does not need a browser.
 
-The first camera or photo try-on downloads MediaPipe Face Landmarker. The mannequin does not need that download. Camera permission stays in the browser; catalog edits, comments, and uploaded images stay in `localStorage`.
+The page opens on the studio mannequin and does not download the face model until you start the camera or upload a photo. That download is MediaPipe Face Landmarker. Camera permission stays in the browser; catalog edits, comments, and uploaded images stay in `localStorage`.
 
 The admin PIN is `auricle`.
 
