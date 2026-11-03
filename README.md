@@ -8,15 +8,15 @@ Earrings are small 3D curves drawn in the canvas. Hoops sit in the plane of the 
 
 The page uses JavaScript modules, so it has to be served. Opening `index.html` by double-clicking it will not run.
 
-From this folder:
+On a Mac, unzip the folder, then double-click `start.command`. If macOS blocks it, right-click `start.command` and choose Open. You can also open Terminal, drag the folder onto the Terminal icon, and run:
 
 ```bash
 python3 serve.py
 ```
 
-On Windows, double-click `start.bat`. On Mac or Linux, double-click `start.sh` or run `python3 serve.py`.
+On Windows, double-click `start.bat`.
 
-The window prints `http://127.0.0.1:5173/` and opens it. Leave that window open while you use the site. Press Ctrl+C in it to stop.
+The window prints `http://127.0.0.1:5173/` and opens it. Leave that window open while you use the site. Press Control-C in it to stop. If Python is missing on a Mac, run `xcode-select --install` in Terminal, or install Python from python.org.
 
 If you run the command again while it is already open, it does not start a second server. It prints the same address and opens the page. Use that address, not a `file://` link.
 
