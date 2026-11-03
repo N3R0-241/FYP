@@ -6,13 +6,19 @@ Earrings are small 3D curves drawn in the canvas. Hoops sit in the plane of the 
 
 ## Run
 
-The page uses ES modules, so open it through a local server. From this folder:
+The page uses JavaScript modules, so it has to be served. Opening `index.html` by double-clicking it will not run.
+
+From this folder:
 
 ```bash
-python3 -m http.server 5173
+python3 serve.py
 ```
 
-Then open `http://localhost:5173`.
+On Windows, double-click `start.bat`. On Mac or Linux, double-click `start.sh` or run `python3 serve.py`.
+
+The window prints `http://127.0.0.1:5173/` and opens it. Leave that window open while you use the site. Press Ctrl+C in it to stop.
+
+If you run the command again while it is already open, it does not start a second server. It prints the same address and opens the page. Use that address, not a `file://` link.
 
 `npm test` runs the geometry, tracking, catalog, and One Euro checks with Node. It does not need a browser.
 

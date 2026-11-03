@@ -72,9 +72,9 @@ async function startCamera() {
   state.status = "Loading the face model…";
   setStatus();
   try {
-    await initVision();
+    await initVision("VIDEO");
     setStatus();
-    if (!state.modelReady) return;
+    if (!state.modelReady || state.runningMode !== "VIDEO") return;
     state.status = "Waiting for camera permission…";
     setStatus();
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -120,7 +120,7 @@ async function usePhoto(file) {
     document.body.dataset.mode = "photo";
     state.status = "Loading the face model…";
     setStatus();
-    await initVision();
+    await initVision("IMAGE");
     if (!state.modelReady) {
       setStatus();
       return;
@@ -144,8 +144,12 @@ function loadImage(file) {
     const url = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => {
+      const copy = document.createElement("canvas");
+      copy.width = image.naturalWidth || image.width;
+      copy.height = image.naturalHeight || image.height;
+      copy.getContext("2d").drawImage(image, 0, 0);
       URL.revokeObjectURL(url);
-      resolve(image);
+      resolve(copy);
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);

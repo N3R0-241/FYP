@@ -2,7 +2,7 @@ import { FilterBank } from "./oneEuro.js";
 import { drawEarring, drawMannequin, refillHead, clipRedraw } from "./render.js";
 import { state } from "./state.js";
 import { analyzeFace, eulerFromMatrix, shrinkPolygon, visibilityFromYaw } from "./tracking.js";
-import { ensureRunningMode } from "./vision.js";
+import { detectVideo, initVision, videoTrackerReady } from "./vision.js";
 
 let lastFrame = performance.now();
 
@@ -29,22 +29,27 @@ export function mountSketch(host) {
     };
 
     p.draw = () => {
-      const now = performance.now();
-      const dt = now - lastFrame;
-      lastFrame = now;
-      state.metrics.fps = state.metrics.fps ? state.metrics.fps * 0.9 + (1000 / Math.max(dt, 1)) * 0.1 : 30;
-      p.background(22, 18, 15);
-      const view = { x: 0, y: 0, w: p.width, h: p.height };
+      try {
+        const now = performance.now();
+        const dt = now - lastFrame;
+        lastFrame = now;
+        state.metrics.fps = state.metrics.fps ? state.metrics.fps * 0.9 + (1000 / Math.max(dt, 1)) * 0.1 : 30;
+        p.background(22, 18, 15);
+        const view = { x: 0, y: 0, w: p.width, h: p.height };
 
-      if (state.mode === "camera" && state.video && state.video.readyState >= 2) {
-        drawLive(p, view, now);
-      } else if (state.mode === "photo" && state.photo) {
-        drawPhoto(p, view, now);
-      } else {
-        drawStudio(p, view, now);
+        if (state.mode === "camera" && state.video && state.video.readyState >= 2 && state.video.videoWidth > 0) {
+          drawLive(p, view, now);
+        } else if (state.mode === "photo" && state.photo) {
+          drawPhoto(p, view, now);
+        } else {
+          drawStudio(p, view, now);
+        }
+        drawSpark();
+        publishMetrics();
+      } catch (error) {
+        state.status = error?.message || "The preview hit an error. Reload the page.";
+        publishMetrics();
       }
-      drawSpark();
-      publishMetrics();
     };
   }, host);
 
@@ -87,14 +92,18 @@ function drawLive(p, view, now) {
   const started = performance.now();
   let landmarks = null;
   let matrix = null;
-  if (state.modelReady && state.runningMode !== "VIDEO" && !state.modeSwitching) {
-    ensureRunningMode("VIDEO");
-  }
-  if (state.modelReady && state.landmarker && !state.modeSwitching && state.runningMode === "VIDEO") {
+  if (!videoTrackerReady()) {
+    if (!state.modeSwitching && !state.modelError) {
+      state.modeSwitching = true;
+      initVision("VIDEO").finally(() => {
+        state.modeSwitching = false;
+      });
+    }
+  } else {
     try {
-      const result = state.landmarker.detectForVideo(video, now);
-      landmarks = result.faceLandmarks?.[0] || null;
-      matrix = result.facialTransformationMatrixes?.[0] || null;
+      const result = detectVideo(video, now);
+      landmarks = result?.faceLandmarks?.[0] || null;
+      matrix = result?.facialTransformationMatrixes?.[0] || null;
     } catch (error) {
       state.status = `Tracking paused: ${error.message || "detect failed"}`;
     }
@@ -105,7 +114,7 @@ function drawLive(p, view, now) {
 
 function drawPhoto(p, view, now) {
   const image = state.photo;
-  const fitted = fitRect(image.naturalWidth, image.naturalHeight, view.w, view.h, 0);
+  const fitted = fitRect(image.naturalWidth || image.width, image.naturalHeight || image.height, view.w, view.h, 0);
   drawMedia(p, image, fitted, state.mirror);
   state.metrics.detectMs = 0;
   paintTracked(p, state.photoLandmarks, state.photoMatrix, fitted, state.mirror, now, image);
