@@ -1,1 +1,37 @@
-# FYP
+# Auricle
+
+A browser earring try-on for EN4262. The page is a [p5.js](https://p5js.org/) sketch: a studio mannequin, a live camera, or an uploaded photo, with the catalog beside it.
+
+Earrings are small 3D curves drawn in the canvas. Hoops sit in the plane of the ear, drops hang with gravity, and cuffs stay on the helix. Scale uses a 63 mm distance between the outer eye corners.
+
+## Run
+
+The page uses ES modules, so open it through a local server. From this folder:
+
+```bash
+python3 -m http.server 5173
+```
+
+Then open `http://localhost:5173`.
+
+`npm test` runs the geometry, tracking, catalog, and One Euro checks with Node. It does not need a browser.
+
+The first camera or photo try-on downloads MediaPipe Face Landmarker. The mannequin does not need that download. Camera permission stays in the browser; catalog edits, comments, and uploaded images stay in `localStorage`.
+
+The admin PIN is `auricle`.
+
+## What maps to the report
+
+| Report idea | Where it lives |
+| --- | --- |
+| Face-tracking try-on, camera and still photo | `js/vision.js`, `js/sketch.js` |
+| Ear anchors from a sparse face mesh (temple, tragion, jaw), then shifted out to the lobule | `js/tracking.js` |
+| One Euro jitter filter, with cutoff and beta controls | `js/oneEuro.js` |
+| Hoop foreshortening, gravity on drops, cuff locked to the helix, cheek occlusion | `js/geom.js`, `js/render.js` |
+| Filter, search, comments | `js/catalog.js`, `js/ui.js` |
+| Catalog admin and image upload | Admin dialog in `index.html` |
+| Manual nudge, scale, and roll | Fit controls |
+
+The face mesh has no dense pinna. This build estimates the three ear points instead of training a separate ear network. Shading is a real-time metal model in the canvas, not a full physically based glTF renderer. Payment, stock logistics, and an external comment service are out of scope.
+
+Left and right in the ear menu are the wearer's ears. The camera view starts mirrored, like a selfie. Photos start unmirrored.
